@@ -5,6 +5,7 @@ edition = "2024"
 
 [target.'cfg(windows)'.dependencies]
 windows-reactor = { git = "https://github.com/microsoft/windows-rs" }
+foundry-local-sdk = { version = "1.2.3", features = ["winml"] }
 
 [target.'cfg(windows)'.build-dependencies]
 windows-reactor-setup = { git = "https://github.com/microsoft/windows-rs" }
@@ -12,3 +13,7 @@ windows-reactor-setup = { git = "https://github.com/microsoft/windows-rs" }
 # Without this, it would be undefined behavior
 [profile.release]
 panic = "abort"
+
+[dependencies]
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "sync"] }
+tokio-stream = "0.1.19"
