@@ -3,11 +3,14 @@ use foundry_local_sdk::{
     ChatCompletionRequestUserMessage, FoundryLocalConfig, FoundryLocalError, FoundryLocalManager,
     openai::ChatClient,
 };
-use tokio::sync::mpsc::{Sender, UnboundedSender};
+use tokio::sync::{
+    mpsc::{Sender, UnboundedSender},
+    watch,
+};
 use tokio_stream::StreamExt;
 
-const MODEL_NAME: &str = "phi-4-mini";
-const MAX_TOKENS: u32 = 1024;
+const MODEL_NAME: &str = "qwen2.5-7b";
+const MAX_TOKENS: u32 = 512;
 
 pub struct ModelManager {
     client: ChatClient,
@@ -15,30 +18,43 @@ pub struct ModelManager {
 
 impl ModelManager {
     pub async fn new(
-        ep_download: impl FnMut(&str, f64) + Send + 'static,
-        model_download: impl FnMut(f64) + Send + 'static,
+        ep_download: watch::Sender<f64>,
+        model_download: watch::Sender<f64>,
     ) -> Result<Self, FoundryLocalError> {
         let manager = FoundryLocalManager::create(FoundryLocalConfig::new("modelchecker"))?;
         manager
-            .download_and_register_eps_with_progress(None, ep_download)
+            .download_and_register_eps_with_progress(None, move |_, progress| {
+                ep_download.send(progress);
+            })
             .await?;
 
         let model = manager.catalog().get_model(MODEL_NAME).await?;
 
         if !model.is_cached().await? {
-            model.download(Some(model_download)).await?;
+            model
+                .download(Some(move |progress| {
+                    model_download.send(progress);
+                }))
+                .await?;
         }
 
         let client = model
             .create_chat_client()
             .temperature(0.7)
+            .top_p(0.9)
+            .frequency_penalty(1.12)
+            .presence_penalty(1.05)
             .max_tokens(MAX_TOKENS);
 
         model.load().await?;
         Ok(Self { client })
     }
 
-    pub async fn ask(&self, message: String, sender: UnboundedSender<String>) -> Result<(), FoundryLocalError> {
+    pub async fn ask(
+        &self,
+        message: String,
+        sender: UnboundedSender<String>,
+    ) -> Result<(), FoundryLocalError> {
         let messages: Vec<ChatCompletionRequestMessage> = vec![
             ChatCompletionRequestSystemMessage::from("You are a helpful assistant.").into(),
             ChatCompletionRequestUserMessage::from(message).into(),
@@ -51,8 +67,6 @@ impl ModelManager {
 
             if let Some(choice) = chunk.choices.first() {
                 if let Some(ref content) = choice.delta.content {
-                    print!("{content}");
-
                     sender.send(content.clone()).unwrap();
                 }
             }
