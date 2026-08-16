@@ -31,6 +31,43 @@ fn home_page(
 
     let backend_temp = backend_tx.clone();
 
+    let send_message = {
+        let textbox = textbox.clone();
+        let set_query = set_query.clone();
+        let set_textbox = set_textbox.clone();
+        let backend_temp = backend_temp.clone();
+        let set_response = set_response.clone();
+
+        move || {
+            let current_text = textbox.clone();
+            if current_text.trim().is_empty() {
+                return;
+            }
+
+            set_query.call(current_text.clone());
+            set_textbox.call(String::new()); // Clear the textbox
+
+            let (response_tx, mut response_rx) = tokio::sync::mpsc::unbounded_channel();
+
+            backend_temp
+                .send(BackendCommands::Query {
+                    query: current_text,
+                    sender: response_tx,
+                })
+                .unwrap();
+
+            let set_response_clone = set_response.clone();
+
+            tokio::spawn(async move {
+                let mut full_response = String::new();
+                while let Some(recv_response) = response_rx.recv().await {
+                    full_response.push_str(&recv_response);
+                    set_response_clone.call(full_response.clone());
+                }
+            });
+        }
+    };
+
     grid((
         // Window title bar
         TitleBar::new("ModelChecker")
@@ -61,8 +98,19 @@ fn home_page(
                     .text_wrapping(TextWrapping::Wrap)
                     .horizontal_alignment(HorizontalAlignment::Stretch)
                     .multiline()
+                    .enabled(ready)
                     .on_text_changed(move |c: String| {
                         set_textbox.call(c.clone());
+                    })
+                    .keyboard_accelerator(KeyboardAccelerator {
+                        key: VirtualKey::Enter,
+                        modifiers: VirtualKeyModifiers::None,
+                        on_invoked: {
+                            let send_message = send_message.clone();
+                            Callback::new(move |_| {
+                                send_message();
+                            })
+                        },
                     })
                     .max_height(100.0)
                     .grid_column(0),
@@ -72,32 +120,11 @@ fn home_page(
                     .enabled(ready)
                     .vertical_alignment(VerticalAlignment::Bottom)
                     .grid_column(1)
-                    .on_click(move || {
-                        // Capture the current text directly
-                        let current_text = textbox.clone();
-                        set_query.call(current_text.clone());
-
-                        let (response_tx, mut response_rx) = tokio::sync::mpsc::unbounded_channel();
-
-                        backend_temp
-                            .send(BackendCommands::Query {
-                                query: current_text,
-                                sender: response_tx,
-                            })
-                            .unwrap();
-
-                        let set_response_clone = set_response.clone();
-
-                        // Spawn a background task to await chunks asynchronously without blocking the UI
-                        tokio::spawn(async move {
-                            let mut full_response = String::new();
-
-                            while let Some(recv_response) = response_rx.recv().await {
-                                // Append to a local accumulator, then update the state
-                                full_response.push_str(&recv_response);
-                                set_response_clone.call(full_response.clone());
-                            }
-                        });
+                    .on_click({
+                        let send_message = send_message.clone();
+                        move || {
+                            send_message()
+                        }
                     }),
             ))
             .columns([GridLength::Star(1.0), GridLength::Auto])
