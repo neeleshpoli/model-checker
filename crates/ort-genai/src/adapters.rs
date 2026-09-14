@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaAdapters, OgaCreateAdapters, OgaDestroyAdapters, OgaLoadAdapter, OgaUnloadAdapter,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::model::Model;
 
 pub struct Adapters {

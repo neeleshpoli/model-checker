@@ -6,7 +6,7 @@ use ort_genai_sys::{
     OgaRuntimeSettingsSetHandle,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 
 pub struct RuntimeSettings {
     pub(crate) ptr: Arc<Mutex<*mut OgaRuntimeSettings>>,
@@ -26,11 +26,15 @@ impl RuntimeSettings {
         })
     }
 
-    pub fn set_handle(&self, handle_name: &str, handle: *mut std::ffi::c_void) -> Result<()> {
+    pub fn set_handle(&self, handle_name: &str, handle: usize) -> Result<()> {
         let ptr = self.ptr.lock()?;
         let c_name = CString::new(handle_name)?;
         unsafe {
-            check_status(OgaRuntimeSettingsSetHandle(*ptr, c_name.as_ptr(), handle))?;
+            check_status(OgaRuntimeSettingsSetHandle(
+                *ptr,
+                c_name.as_ptr(),
+                handle as *mut std::ffi::c_void,
+            ))?;
         }
         Ok(())
     }

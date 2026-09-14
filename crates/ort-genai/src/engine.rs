@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaEngineRemoveRequest, OgaEngineStep,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::model::Model;
 use crate::request::Request;
 

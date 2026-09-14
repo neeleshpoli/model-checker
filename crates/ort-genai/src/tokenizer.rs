@@ -11,7 +11,7 @@ use ort_genai_sys::{
     OgaUpdateTokenizerOptions,
 };
 
-use crate::error::{Error, Result, check_status};
+use crate::error::{check_status, Error, Result};
 use crate::model::Model;
 use crate::sequences::Sequences;
 use crate::string_array::StringArray;

@@ -6,7 +6,7 @@ use ort_genai_sys::{
     OgaStringArrayAddString, OgaStringArrayGetCount, OgaStringArrayGetString,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 
 pub struct StringArray {
     pub(crate) ptr: Arc<Mutex<*mut OgaStringArray>>,

@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaRequestGetUnseenToken, OgaRequestHasUnseenTokens, OgaRequestIsDone, OgaRequestSetOpaqueData,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::generator::GeneratorParams;
 use crate::sequences::Sequences;
 
@@ -43,21 +43,21 @@ impl Request {
         Ok(())
     }
 
-    pub fn set_opaque_data(&self, data: *mut std::ffi::c_void) -> Result<()> {
+    pub fn set_opaque_data(&self, data: usize) -> Result<()> {
         let ptr = self.ptr.lock()?;
         unsafe {
-            check_status(OgaRequestSetOpaqueData(*ptr, data))?;
+            check_status(OgaRequestSetOpaqueData(*ptr, data as *mut std::ffi::c_void))?;
         }
         Ok(())
     }
 
-    pub fn get_opaque_data(&self) -> Result<*mut std::ffi::c_void> {
+    pub fn get_opaque_data(&self) -> Result<usize> {
         let ptr = self.ptr.lock()?;
         let mut out: *mut std::ffi::c_void = std::ptr::null_mut();
         unsafe {
             check_status(OgaRequestGetOpaqueData(*ptr, &mut out))?;
         }
-        Ok(out)
+        Ok(out as usize)
     }
 
     pub fn has_unseen_tokens(&self) -> Result<bool> {

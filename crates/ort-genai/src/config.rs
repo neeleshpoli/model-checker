@@ -11,7 +11,7 @@ use ort_genai_sys::{
     OgaCreateConfig, OgaCreateConfigFromPackageEp, OgaDestroyConfig,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 
 pub struct Config {
     pub(crate) ptr: Arc<Mutex<*mut OgaConfig>>,

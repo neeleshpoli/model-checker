@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaDestroyImages, OgaImages, OgaLoadImage, OgaLoadImages, OgaLoadImagesFromBuffers,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::string_array::StringArray;
 
 pub struct Images {

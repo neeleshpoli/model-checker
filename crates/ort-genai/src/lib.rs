@@ -100,11 +100,30 @@ pub fn set_log_string(name: &str, value: &str) -> error::Result<()> {
     Ok(())
 }
 
-pub fn set_log_callback(
-    callback: Option<unsafe extern "C" fn(string: *const std::ffi::c_char, length: usize)>,
-) -> error::Result<()> {
+static mut LOG_CALLBACK: Option<fn(&str, usize)> = None;
+
+unsafe extern "C" fn log_callback_trampoline(string: *const std::ffi::c_char, length: usize) {
     unsafe {
-        error::check_status(ort_genai_sys::OgaSetLogCallback(callback))?;
+        if let Some(cb) = LOG_CALLBACK {
+            if !string.is_null() {
+                let c_str = std::ffi::CStr::from_ptr(string);
+                if let Ok(rust_str) = c_str.to_str() {
+                    cb(rust_str, length);
+                }
+            }
+        }
+    }
+}
+
+pub fn set_log_callback(callback: Option<fn(&str, usize)>) -> error::Result<()> {
+    unsafe {
+        LOG_CALLBACK = callback;
+        let cb_ptr = if callback.is_some() {
+            Some(log_callback_trampoline as unsafe extern "C" fn(*const std::ffi::c_char, usize))
+        } else {
+            None
+        };
+        error::check_status(ort_genai_sys::OgaSetLogCallback(cb_ptr))?;
     }
     Ok(())
 }

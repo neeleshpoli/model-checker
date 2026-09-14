@@ -3,18 +3,17 @@ use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaCreateGenerator, OgaCreateGeneratorParams, OgaDestroyGenerator, OgaDestroyGeneratorParams,
-    OgaGenerator, OgaGenerator_AppendTokenSequences, OgaGenerator_AppendTokens,
-    OgaGenerator_GenerateNextToken, OgaGenerator_GetInput, OgaGenerator_GetLogits,
-    OgaGenerator_GetNextTokens, OgaGenerator_GetOutput, OgaGenerator_GetSequenceCount,
-    OgaGenerator_GetSequenceData, OgaGenerator_IsDone, OgaGenerator_RewindTo,
-    OgaGenerator_SetInputs, OgaGenerator_SetLogits, OgaGenerator_SetModelInput,
-    OgaGenerator_SetRuntimeOption, OgaGenerator_TokenCount, OgaGeneratorParams,
-    OgaGeneratorParamsGetSearchBool, OgaGeneratorParamsGetSearchNumber,
-    OgaGeneratorParamsSetGuidance, OgaGeneratorParamsSetSearchBool,
-    OgaGeneratorParamsSetSearchNumber,
+    OgaGenerator, OgaGeneratorParams, OgaGeneratorParamsGetSearchBool,
+    OgaGeneratorParamsGetSearchNumber, OgaGeneratorParamsSetGuidance,
+    OgaGeneratorParamsSetSearchBool, OgaGeneratorParamsSetSearchNumber,
+    OgaGenerator_AppendTokenSequences, OgaGenerator_AppendTokens, OgaGenerator_GenerateNextToken,
+    OgaGenerator_GetInput, OgaGenerator_GetLogits, OgaGenerator_GetNextTokens,
+    OgaGenerator_GetOutput, OgaGenerator_GetSequenceCount, OgaGenerator_GetSequenceData,
+    OgaGenerator_IsDone, OgaGenerator_RewindTo, OgaGenerator_SetInputs, OgaGenerator_SetLogits,
+    OgaGenerator_SetModelInput, OgaGenerator_SetRuntimeOption, OgaGenerator_TokenCount,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::model::Model;
 use crate::sequences::Sequences;
 use crate::tensor::{NamedTensors, Tensor};

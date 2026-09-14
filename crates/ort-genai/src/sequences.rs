@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaSequences, OgaSequencesCount, OgaSequencesGetSequenceCount, OgaSequencesGetSequenceData,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 
 pub struct Sequences {
     pub(crate) ptr: Arc<Mutex<*mut OgaSequences>>,

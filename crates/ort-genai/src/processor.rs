@@ -9,7 +9,7 @@ use ort_genai_sys::{
     OgaProcessorProcessImagesAndPrompts,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::images::Images;
 use crate::model::Model;
 use crate::string_array::StringArray;

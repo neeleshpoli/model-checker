@@ -7,7 +7,7 @@ use ort_genai_sys::{
     OgaStreamingProcessorSetOption,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::model::Model;
 use crate::tensor::NamedTensors;
 

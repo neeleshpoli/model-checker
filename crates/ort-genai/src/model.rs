@@ -7,7 +7,7 @@ use ort_genai_sys::{
 };
 
 use crate::config::Config;
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::runtime_settings::RuntimeSettings;
 
 pub struct Model {

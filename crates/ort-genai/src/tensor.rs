@@ -8,7 +8,7 @@ use ort_genai_sys::{
     OgaTensorGetShape, OgaTensorGetShapeRank, OgaTensorGetType,
 };
 
-use crate::error::{Result, check_status};
+use crate::error::{check_status, Result};
 use crate::string_array::StringArray;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -89,8 +89,8 @@ unsafe impl Send for Tensor {}
 unsafe impl Sync for Tensor {}
 
 impl Tensor {
-    pub fn from_buffer(
-        data: *mut std::ffi::c_void,
+    pub fn from_buffer<T>(
+        data: &mut [T],
         shape: &[i64],
         element_type: ElementType,
     ) -> Result<Self> {
@@ -98,7 +98,7 @@ impl Tensor {
         let oga_type = element_type.into();
         unsafe {
             check_status(OgaCreateTensorFromBuffer(
-                data,
+                data.as_mut_ptr() as *mut std::ffi::c_void,
                 shape.as_ptr(),
                 shape.len(),
                 oga_type,
@@ -144,13 +144,20 @@ impl Tensor {
         Ok(shape)
     }
 
-    pub fn get_data(&self) -> Result<*mut std::ffi::c_void> {
+    pub fn get_data<T>(&self) -> Result<&mut [T]> {
         let ptr = self.ptr.lock()?;
         let mut data_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
         unsafe {
             check_status(OgaTensorGetData(*ptr, &mut data_ptr))?;
         }
-        Ok(data_ptr)
+
+        let shape = self.get_shape()?;
+        let size: usize = shape.iter().map(|&x| x as usize).product();
+
+        unsafe {
+            let slice = std::slice::from_raw_parts_mut(data_ptr as *mut T, size);
+            Ok(slice)
+        }
     }
 }
 
