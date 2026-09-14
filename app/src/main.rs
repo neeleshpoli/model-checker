@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 mod model_manager;
+mod web_search;
 
 #[cfg(windows)]
 use tokio::sync::{
@@ -122,9 +123,7 @@ fn home_page(
                     .grid_column(1)
                     .on_click({
                         let send_message = send_message.clone();
-                        move || {
-                            send_message()
-                        }
+                        move || send_message()
                     }),
             ))
             .columns([GridLength::Star(1.0), GridLength::Auto])

@@ -1,0 +1,10 @@
+[package]
+name = "ort-genai-sys"
+version = "0.15.2"
+edition = "2024"
+links = "onnxruntime-genai"
+
+[build-dependencies]
+bindgen = "0.72"
+ureq = "3.4"
+zip = "8.6"

@@ -1,0 +1,21 @@
+[package]
+name = "win-reactor"
+version = "0.1.0"
+edition = "2024"
+
+[target.'cfg(windows)'.dependencies]
+windows-reactor = { git = "https://github.com/microsoft/windows-rs" }
+foundry-local-sdk = { version = "1.2.3", features = ["winml"] }
+windows = { version = "0.62.2", features = ["Web_Http"] }
+
+[target.'cfg(windows)'.build-dependencies]
+windows-reactor-setup = { git = "https://github.com/microsoft/windows-rs" }
+
+[dependencies]
+async-openai = { version = "0.41.3", features = ["chat-completion-types", "image-types"] }
+serde = "1.0.229"
+serde_json = "1.0.151"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "sync"] }
+tokio-stream = "0.1.19"
+windows = { version = "0.62.2", features = ["Web_Http_Headers"] }
+ort-genai = { path = "../crates/ort-genai" }

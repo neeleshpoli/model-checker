@@ -1,19 +1,11 @@
-[package]
-name = "win-reactor"
-version = "0.1.0"
-edition = "2024"
-
-[target.'cfg(windows)'.dependencies]
-windows-reactor = { git = "https://github.com/microsoft/windows-rs" }
-foundry-local-sdk = { version = "1.2.3", features = ["winml"] }
-
-[target.'cfg(windows)'.build-dependencies]
-windows-reactor-setup = { git = "https://github.com/microsoft/windows-rs" }
+[workspace]
+members = [
+    "app",
+    "crates/ort-genai-sys",
+    "crates/ort-genai"
+]
+resolver = "2"
 
 # Without this, it would be undefined behavior
 [profile.release]
 panic = "abort"
-
-[dependencies]
-tokio = { version = "1.53.1", features = ["rt-multi-thread", "sync"] }
-tokio-stream = "0.1.19"
