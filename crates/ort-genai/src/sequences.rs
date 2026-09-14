@@ -25,7 +25,31 @@ impl Sequences {
         })
     }
 
-    pub fn num_sequences(&self) -> Result<usize> {
+    /// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+/// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+/// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+/// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+/// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+/// Returns the number of sequences in the Sequences
+/// * sequences
+/// Returns: The number of sequences in the Sequences
+/// /
+pub fn num_sequences(&self) -> Result<usize> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(OgaSequencesCount(*ptr)) }
     }
@@ -46,12 +70,90 @@ impl Sequences {
         Ok(())
     }
 
-    pub fn sequence_len(&self, sequence_index: usize) -> Result<usize> {
+    /// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The number of tokens in the sequence at the given index. Returns 0 if
+/// sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+pub fn sequence_len(&self, sequence_index: usize) -> Result<usize> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(OgaSequencesGetSequenceCount(*ptr, sequence_index)) }
     }
 
-    pub fn get_sequence(&self, sequence_index: usize) -> Result<Vec<i32>> {
+    /// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by SequencesGetSequenceCount
+/// * sequences Sequences to use.
+/// * sequence_index index of the sequence to use.
+/// Returns: The pointer to the sequence data at the given index. The pointer is valid until the Sequences is destroyed.
+/// Returns nullptr if sequence_index is out of bounds (i.e. >= SequencesCount(sequences)).
+/// /
+pub fn get_sequence(&self, sequence_index: usize) -> Result<Vec<i32>> {
         let ptr = self.ptr.lock()?;
         unsafe {
             let count = OgaSequencesGetSequenceCount(*ptr, sequence_index);

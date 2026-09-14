@@ -139,7 +139,31 @@ impl Generator {
         })
     }
 
-    pub fn is_done(&self) -> Result<bool> {
+    /// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+/// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+/// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+/// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+/// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+/// Returns true if the generator has finished generating all the sequences.
+/// * generator The generator to check if it is done with generating all sequences.
+/// Returns: True if the generator has finished generating all the sequences, false otherwise.
+/// /
+pub fn is_done(&self) -> Result<bool> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(OgaGenerator_IsDone(*ptr)) }
     }
@@ -196,7 +220,31 @@ impl Generator {
         Ok(())
     }
 
-    pub fn token_count(&self) -> Result<usize> {
+    /// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+/// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+/// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+/// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+/// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+/// Returns the number of tokens in the generator
+/// * generator The generator containing the appended tokens.
+/// Returns: The number of tokens that have been added.
+/// /
+pub fn token_count(&self) -> Result<usize> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(OgaGenerator_TokenCount(*ptr)) }
     }
@@ -284,12 +332,90 @@ impl Generator {
         Ok(())
     }
 
-    pub fn get_sequence_count(&self, index: usize) -> Result<usize> {
+    /// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+/// Returns the number of tokens in the sequence at the given index.
+/// * generator The generator to get the count of the tokens for the sequence at the given index.
+/// * index The given index.
+/// Returns: The number tokens in the sequence at the given index.
+/// /
+pub fn get_sequence_count(&self, index: usize) -> Result<usize> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(OgaGenerator_GetSequenceCount(*ptr, index)) }
     }
 
-    pub fn get_sequence_data(&self, index: usize) -> Result<Vec<i32>> {
+    /// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+/// is given by Generator_GetSequenceCount
+/// * generator The generator to get the sequence data for the sequence at the given index.
+/// * index The given index.
+/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+/// be used after the Generator is destroyed.
+/// /
+pub fn get_sequence_data(&self, index: usize) -> Result<Vec<i32>> {
         let ptr = self.ptr.lock()?;
         unsafe {
             let count = OgaGenerator_GetSequenceCount(*ptr, index);
@@ -316,7 +442,31 @@ impl Drop for Generator {
 }
 
 impl Generator {
-    pub fn is_session_terminated(&self) -> Result<bool> {
+    /// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+/// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+/// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+/// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+/// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+/// Returns true if the session has been terminated.
+/// * generator The generator to add the inputs to.
+/// Returns: True if the session has been terminated, false otherwise.
+/// /
+pub fn is_session_terminated(&self) -> Result<bool> {
         let ptr = self.ptr.lock()?;
         unsafe { Ok(ort_genai_sys::OgaGenerator_IsSessionTerminated(*ptr)) }
     }
