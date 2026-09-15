@@ -1,5 +1,4 @@
 use std::ffi::{CStr, CString};
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaCreateTokenizer, OgaCreateTokenizerStream, OgaDestroyString, OgaDestroyTokenizer,
@@ -18,22 +17,17 @@ use crate::string_array::StringArray;
 use crate::tensor::Tensor;
 
 pub struct Tokenizer {
-    pub(crate) ptr: Arc<Mutex<*mut OgaTokenizer>>,
+    pub(crate) ptr: *mut OgaTokenizer,
 }
-
-unsafe impl Send for Tokenizer {}
-unsafe impl Sync for Tokenizer {}
 
 impl Tokenizer {
     pub fn new(model: &Model) -> Result<Self> {
         let mut ptr: *mut OgaTokenizer = std::ptr::null_mut();
-        let model_ptr = model.ptr.lock()?;
+        let model_ptr = model.ptr;
         unsafe {
-            check_status(OgaCreateTokenizer(*model_ptr, &mut ptr))?;
+            check_status(OgaCreateTokenizer(model_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn update_options(&self, keys: &[&str], values: &[&str]) -> Result<()> {
@@ -43,7 +37,7 @@ impl Tokenizer {
             ));
         }
 
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
 
         let c_keys: Vec<CString> = keys
             .iter()
@@ -63,7 +57,7 @@ impl Tokenizer {
 
         unsafe {
             check_status(OgaUpdateTokenizerOptions(
-                *ptr,
+                ptr,
                 c_keys_ptrs.as_ptr(),
                 c_values_ptrs.as_ptr(),
                 keys.len(),
@@ -73,21 +67,21 @@ impl Tokenizer {
     }
 
     pub fn get_bos_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetBosTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetBosTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn get_eos_token_ids(&self) -> Result<Vec<i32>> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_ids_ptr: *const i32 = std::ptr::null();
         let mut count: usize = 0;
         unsafe {
             check_status(OgaTokenizerGetEosTokenIds(
-                *ptr,
+                ptr,
                 &mut token_ids_ptr,
                 &mut count,
             ))?;
@@ -97,62 +91,62 @@ impl Tokenizer {
     }
 
     pub fn get_pad_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetPadTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetPadTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn get_bot_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetBotTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetBotTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn get_eot_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetEotTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetEotTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn get_bor_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetBorTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetBorTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn get_eor_token_id(&self) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerGetEorTokenId(*ptr, &mut token_id))?;
+            check_status(OgaTokenizerGetEorTokenId(ptr, &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn encode(&self, str: &str, sequences: &Sequences) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_str = CString::new(str)?;
-        let seq_ptr = sequences.ptr.lock()?;
+        let seq_ptr = sequences.ptr;
         unsafe {
-            check_status(OgaTokenizerEncode(*ptr, c_str.as_ptr(), *seq_ptr))?;
+            check_status(OgaTokenizerEncode(ptr, c_str.as_ptr(), seq_ptr))?;
         }
         Ok(())
     }
 
-    pub fn encode_batch(&self, strings: &[&str]) -> Result<Tensor> {
-        let ptr = self.ptr.lock()?;
+    pub fn encode_batch(&self, strings: &[&str]) -> Result<Tensor<'_>> {
+        let ptr = self.ptr;
         let c_strings: Vec<CString> = strings
             .iter()
             .map(|s| CString::new(*s).map_err(Into::into))
@@ -163,7 +157,7 @@ impl Tokenizer {
 
         unsafe {
             check_status(OgaTokenizerEncodeBatch(
-                *ptr,
+                ptr,
                 c_ptrs.as_ptr() as *mut _,
                 c_ptrs.len(),
                 &mut tensor_ptr,
@@ -173,33 +167,31 @@ impl Tokenizer {
     }
 
     pub fn decode_batch(&self, tensor: &Tensor) -> Result<StringArray> {
-        let ptr = self.ptr.lock()?;
-        let tensor_ptr = tensor.ptr.lock()?;
+        let ptr = self.ptr;
+        let tensor_ptr = tensor.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaStringArray = std::ptr::null_mut();
         unsafe {
-            check_status(OgaTokenizerDecodeBatch(*ptr, *tensor_ptr, &mut out_ptr))?;
+            check_status(OgaTokenizerDecodeBatch(ptr, tensor_ptr, &mut out_ptr))?;
         }
-        Ok(StringArray {
-            ptr: Arc::new(Mutex::new(out_ptr)),
-        })
+        Ok(StringArray { ptr: out_ptr })
     }
 
     pub fn to_token_id(&self, str: &str) -> Result<i32> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_str = CString::new(str)?;
         let mut token_id: i32 = 0;
         unsafe {
-            check_status(OgaTokenizerToTokenId(*ptr, c_str.as_ptr(), &mut token_id))?;
+            check_status(OgaTokenizerToTokenId(ptr, c_str.as_ptr(), &mut token_id))?;
         }
         Ok(token_id)
     }
 
     pub fn decode(&self, tokens: &[i32]) -> Result<String> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut out_str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaTokenizerDecode(
-                *ptr,
+                ptr,
                 tokens.as_ptr(),
                 tokens.len(),
                 &mut out_str_ptr,
@@ -219,7 +211,7 @@ impl Tokenizer {
         tools: Option<&str>,
         add_generation_prompt: bool,
     ) -> Result<String> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
 
         let c_template = template_str.map(|s| CString::new(s).unwrap());
         let c_messages = CString::new(messages)?;
@@ -229,7 +221,7 @@ impl Tokenizer {
 
         unsafe {
             check_status(OgaTokenizerApplyChatTemplate(
-                *ptr,
+                ptr,
                 c_template.as_ref().map_or(std::ptr::null(), |c| c.as_ptr()),
                 c_messages.as_ptr(),
                 c_tools.as_ref().map_or(std::ptr::null(), |c| c.as_ptr()),
@@ -247,53 +239,46 @@ impl Tokenizer {
 
 impl Drop for Tokenizer {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyTokenizer(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyTokenizer(self.ptr);
             }
         }
     }
 }
 
 pub struct TokenizerStream {
-    pub(crate) ptr: Arc<Mutex<*mut OgaTokenizerStream>>,
+    pub(crate) ptr: *mut OgaTokenizerStream,
 }
-
-unsafe impl Send for TokenizerStream {}
-unsafe impl Sync for TokenizerStream {}
 
 impl TokenizerStream {
     pub fn new(tokenizer: &Tokenizer) -> Result<Self> {
         let mut ptr: *mut OgaTokenizerStream = std::ptr::null_mut();
-        let tok_ptr = tokenizer.ptr.lock()?;
+        let tok_ptr = tokenizer.ptr;
         unsafe {
-            check_status(OgaCreateTokenizerStream(*tok_ptr, &mut ptr))?;
+            check_status(OgaCreateTokenizerStream(tok_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn decode(&self, token: i32) -> Result<String> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut out_str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
-            check_status(OgaTokenizerStreamDecode(*ptr, token, &mut out_str_ptr))?;
+            check_status(OgaTokenizerStreamDecode(ptr, token, &mut out_str_ptr))?;
             let c_str = CStr::from_ptr(out_str_ptr);
-            Ok(c_str.to_string_lossy().into_owned())
+            let s = c_str.to_string_lossy().into_owned();
+            ort_genai_sys::OgaDestroyString(out_str_ptr);
+            Ok(s)
         }
     }
 }
 
 impl Drop for TokenizerStream {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyTokenizerStream(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyTokenizerStream(self.ptr);
             }
         }
     }

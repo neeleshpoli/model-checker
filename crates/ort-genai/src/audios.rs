@@ -1,5 +1,4 @@
 use std::ffi::CString;
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaAudios, OgaDestroyAudios, OgaLoadAudio, OgaLoadAudios, OgaLoadAudiosFromBuffers,
@@ -9,11 +8,8 @@ use crate::error::{check_status, Result};
 use crate::string_array::StringArray;
 
 pub struct Audios {
-    pub(crate) ptr: Arc<Mutex<*mut OgaAudios>>,
+    pub(crate) ptr: *mut OgaAudios,
 }
-
-unsafe impl Send for Audios {}
-unsafe impl Sync for Audios {}
 
 impl Audios {
     pub fn load(audio_path: &str) -> Result<Self> {
@@ -22,20 +18,16 @@ impl Audios {
         unsafe {
             check_status(OgaLoadAudio(c_path.as_ptr(), &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn load_multiple(audio_paths: &StringArray) -> Result<Self> {
         let mut ptr: *mut OgaAudios = std::ptr::null_mut();
-        let paths_ptr = audio_paths.ptr.lock()?;
+        let paths_ptr = audio_paths.ptr;
         unsafe {
-            check_status(OgaLoadAudios(*paths_ptr, &mut ptr))?;
+            check_status(OgaLoadAudios(paths_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn load_from_buffers(buffers: &[&[u8]]) -> Result<Self> {
@@ -55,19 +47,15 @@ impl Audios {
                 &mut ptr,
             ))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 }
 
 impl Drop for Audios {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyAudios(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyAudios(self.ptr);
             }
         }
     }

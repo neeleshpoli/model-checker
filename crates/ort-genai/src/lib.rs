@@ -54,104 +54,12 @@ use std::ffi::CString;
 /// \note If a host registered execution provider libraries directly on its own OrtEnv reference, it should unregister
 /// them (on that reference) and release the reference after OgaShutdown(), once all GenAI usage is finished.
 /// /
-/// Shuts down the GenAI library and releases all GenAI-owned ONNX Runtime globals.
-/// \warning Callers SHOULD invoke OgaShutdown() before process exit. If it is not called, GenAI's globals are destroyed
-/// at static-destruction time in undefined order, which may crash.
-/// \note C++ callers should prefer the OgaHandle RAII wrapper in ort_genai.h; C# callers should prefer the
-/// OgaHandle IDisposable wrapper. Both invoke OgaShutdown() on destruction.
-/// \note Lifetime contract: no Model / Generator / Tokenizer / Tensor / Engine / Request, or any
-/// object that holds device memory, may outlive OgaShutdown(). The caller MUST destroy every such object before
-/// calling OgaShutdown(). Calling OgaShutdown() with such objects still alive is undefined behavior (typically a
-/// crash when the buffer is freed through a now-invalid allocator).
-/// \note Re-initialization: OgaShutdown() is a full teardown -- it destroys GenAI's ONNX Runtime environment and unloads
-/// GenAI's add-on libraries. GenAI may be used again after OgaShutdown(); the next GenAI call re-initializes with a
-/// fresh environment.
-/// \note If a host registered execution provider libraries directly on its own OrtEnv reference, it should unregister
-/// them (on that reference) and release the reference after OgaShutdown(), once all GenAI usage is finished.
-/// /
-/// Shuts down the GenAI library and releases all GenAI-owned ONNX Runtime globals.
-/// \warning Callers SHOULD invoke OgaShutdown() before process exit. If it is not called, GenAI's globals are destroyed
-/// at static-destruction time in undefined order, which may crash.
-/// \note C++ callers should prefer the OgaHandle RAII wrapper in ort_genai.h; C# callers should prefer the
-/// OgaHandle IDisposable wrapper. Both invoke OgaShutdown() on destruction.
-/// \note Lifetime contract: no Model / Generator / Tokenizer / Tensor / Engine / Request, or any
-/// object that holds device memory, may outlive OgaShutdown(). The caller MUST destroy every such object before
-/// calling OgaShutdown(). Calling OgaShutdown() with such objects still alive is undefined behavior (typically a
-/// crash when the buffer is freed through a now-invalid allocator).
-/// \note Re-initialization: OgaShutdown() is a full teardown -- it destroys GenAI's ONNX Runtime environment and unloads
-/// GenAI's add-on libraries. GenAI may be used again after OgaShutdown(); the next GenAI call re-initializes with a
-/// fresh environment.
-/// \note If a host registered execution provider libraries directly on its own OrtEnv reference, it should unregister
-/// them (on that reference) and release the reference after OgaShutdown(), once all GenAI usage is finished.
-/// /
-/// Shuts down the GenAI library and releases all GenAI-owned ONNX Runtime globals.
-/// \warning Callers SHOULD invoke OgaShutdown() before process exit. If it is not called, GenAI's globals are destroyed
-/// at static-destruction time in undefined order, which may crash.
-/// \note C++ callers should prefer the OgaHandle RAII wrapper in ort_genai.h; C# callers should prefer the
-/// OgaHandle IDisposable wrapper. Both invoke OgaShutdown() on destruction.
-/// \note Lifetime contract: no Model / Generator / Tokenizer / Tensor / Engine / Request, or any
-/// object that holds device memory, may outlive OgaShutdown(). The caller MUST destroy every such object before
-/// calling OgaShutdown(). Calling OgaShutdown() with such objects still alive is undefined behavior (typically a
-/// crash when the buffer is freed through a now-invalid allocator).
-/// \note Re-initialization: OgaShutdown() is a full teardown -- it destroys GenAI's ONNX Runtime environment and unloads
-/// GenAI's add-on libraries. GenAI may be used again after OgaShutdown(); the next GenAI call re-initializes with a
-/// fresh environment.
-/// \note If a host registered execution provider libraries directly on its own OrtEnv reference, it should unregister
-/// them (on that reference) and release the reference after OgaShutdown(), once all GenAI usage is finished.
-/// /
-/// Shuts down the GenAI library and releases all GenAI-owned ONNX Runtime globals.
-/// \warning Callers SHOULD invoke OgaShutdown() before process exit. If it is not called, GenAI's globals are destroyed
-/// at static-destruction time in undefined order, which may crash.
-/// \note C++ callers should prefer the OgaHandle RAII wrapper in ort_genai.h; C# callers should prefer the
-/// OgaHandle IDisposable wrapper. Both invoke OgaShutdown() on destruction.
-/// \note Lifetime contract: no Model / Generator / Tokenizer / Tensor / Engine / Request, or any
-/// object that holds device memory, may outlive OgaShutdown(). The caller MUST destroy every such object before
-/// calling OgaShutdown(). Calling OgaShutdown() with such objects still alive is undefined behavior (typically a
-/// crash when the buffer is freed through a now-invalid allocator).
-/// \note Re-initialization: OgaShutdown() is a full teardown -- it destroys GenAI's ONNX Runtime environment and unloads
-/// GenAI's add-on libraries. GenAI may be used again after OgaShutdown(); the next GenAI call re-initializes with a
-/// fresh environment.
-/// \note If a host registered execution provider libraries directly on its own OrtEnv reference, it should unregister
-/// them (on that reference) and release the reference after OgaShutdown(), once all GenAI usage is finished.
-/// /
-pub fn shutdown() {
+pub unsafe fn shutdown() {
     unsafe {
         OgaShutdown();
     }
 }
 
-/// Enable or disable non-essential telemetry event collection.
-/// Telemetry can be fully disabled at compile time (ENABLE_TELEMETRY=OFF) or by setting
-/// ORT_DISABLE_TELEMETRY=1 before initialization. The environment variable prevents the uploader,
-/// events, and persistent device identifier from being created for the process lifetime. Runtime
-/// controls suppress new detailed model, generation, adapter, and error telemetry; the process
-/// information event may still be emitted.
-/// * enabled true to enable telemetry, false to disable.
-/// /
-/// Enable or disable non-essential telemetry event collection.
-/// Telemetry can be fully disabled at compile time (ENABLE_TELEMETRY=OFF) or by setting
-/// ORT_DISABLE_TELEMETRY=1 before initialization. The environment variable prevents the uploader,
-/// events, and persistent device identifier from being created for the process lifetime. Runtime
-/// controls suppress new detailed model, generation, adapter, and error telemetry; the process
-/// information event may still be emitted.
-/// * enabled true to enable telemetry, false to disable.
-/// /
-/// Enable or disable non-essential telemetry event collection.
-/// Telemetry can be fully disabled at compile time (ENABLE_TELEMETRY=OFF) or by setting
-/// ORT_DISABLE_TELEMETRY=1 before initialization. The environment variable prevents the uploader,
-/// events, and persistent device identifier from being created for the process lifetime. Runtime
-/// controls suppress new detailed model, generation, adapter, and error telemetry; the process
-/// information event may still be emitted.
-/// * enabled true to enable telemetry, false to disable.
-/// /
-/// Enable or disable non-essential telemetry event collection.
-/// Telemetry can be fully disabled at compile time (ENABLE_TELEMETRY=OFF) or by setting
-/// ORT_DISABLE_TELEMETRY=1 before initialization. The environment variable prevents the uploader,
-/// events, and persistent device identifier from being created for the process lifetime. Runtime
-/// controls suppress new detailed model, generation, adapter, and error telemetry; the process
-/// information event may still be emitted.
-/// * enabled true to enable telemetry, false to disable.
-/// /
 /// Enable or disable non-essential telemetry event collection.
 /// Telemetry can be fully disabled at compile time (ENABLE_TELEMETRY=OFF) or by setting
 /// ORT_DISABLE_TELEMETRY=1 before initialization. The environment variable prevents the uploader,
@@ -185,22 +93,6 @@ pub fn get_current_gpu_device_id() -> error::Result<i32> {
 /// * registration_name name for registration.
 /// * path provider path.
 /// /
-/// Registers an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// * path provider path.
-/// /
-/// Registers an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// * path provider path.
-/// /
-/// Registers an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// * path provider path.
-/// /
-/// Registers an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// * path provider path.
-/// /
 pub fn register_execution_provider_library(registration_name: &str, library_path: &str) {
     if let (Ok(c_name), Ok(c_path)) = (CString::new(registration_name), CString::new(library_path))
     {
@@ -210,18 +102,6 @@ pub fn register_execution_provider_library(registration_name: &str, library_path
     }
 }
 
-/// Unregisters an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// /
-/// Unregisters an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// /
-/// Unregisters an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// /
-/// Unregisters an execution provider library with ONNXRuntime API.
-/// * registration_name name for registration.
-/// /
 /// Unregisters an execution provider library with ONNXRuntime API.
 /// * registration_name name for registration.
 /// /

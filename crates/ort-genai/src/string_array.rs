@@ -1,5 +1,4 @@
 use std::ffi::{CStr, CString};
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaCreateStringArray, OgaCreateStringArrayFromStrings, OgaDestroyStringArray, OgaStringArray,
@@ -9,11 +8,8 @@ use ort_genai_sys::{
 use crate::error::{check_status, Result};
 
 pub struct StringArray {
-    pub(crate) ptr: Arc<Mutex<*mut OgaStringArray>>,
+    pub(crate) ptr: *mut OgaStringArray,
 }
-
-unsafe impl Send for StringArray {}
-unsafe impl Sync for StringArray {}
 
 impl StringArray {
     pub fn new() -> Result<Self> {
@@ -21,9 +17,7 @@ impl StringArray {
         unsafe {
             check_status(OgaCreateStringArray(&mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn from_strings(strings: &[&str]) -> Result<Self> {
@@ -44,25 +38,23 @@ impl StringArray {
             ))?;
         }
 
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn add(&self, string: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_string = CString::new(string)?;
         unsafe {
-            check_status(OgaStringArrayAddString(*ptr, c_string.as_ptr()))?;
+            check_status(OgaStringArrayAddString(ptr, c_string.as_ptr()))?;
         }
         Ok(())
     }
 
     pub fn len(&self) -> Result<usize> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut count: usize = 0;
         unsafe {
-            check_status(OgaStringArrayGetCount(*ptr, &mut count))?;
+            check_status(OgaStringArrayGetCount(ptr, &mut count))?;
         }
         Ok(count)
     }
@@ -72,23 +64,23 @@ impl StringArray {
     }
 
     pub fn get(&self, index: usize) -> Result<String> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
-            check_status(OgaStringArrayGetString(*ptr, index, &mut str_ptr))?;
+            check_status(OgaStringArrayGetString(ptr, index, &mut str_ptr))?;
             let c_str = CStr::from_ptr(str_ptr);
-            Ok(c_str.to_string_lossy().into_owned())
+            let s = c_str.to_string_lossy().into_owned();
+            ort_genai_sys::OgaDestroyString(str_ptr);
+            Ok(s)
         }
     }
 }
 
 impl Drop for StringArray {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyStringArray(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyStringArray(self.ptr);
             }
         }
     }

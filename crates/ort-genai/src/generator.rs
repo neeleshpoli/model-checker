@@ -1,5 +1,4 @@
 use std::ffi::CString;
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaCreateGenerator, OgaCreateGeneratorParams, OgaDestroyGenerator, OgaDestroyGeneratorParams,
@@ -19,30 +18,25 @@ use crate::sequences::Sequences;
 use crate::tensor::{NamedTensors, Tensor};
 
 pub struct GeneratorParams {
-    pub(crate) ptr: Arc<Mutex<*mut OgaGeneratorParams>>,
+    pub(crate) ptr: *mut OgaGeneratorParams,
 }
-
-unsafe impl Send for GeneratorParams {}
-unsafe impl Sync for GeneratorParams {}
 
 impl GeneratorParams {
     pub fn new(model: &Model) -> Result<Self> {
         let mut ptr: *mut OgaGeneratorParams = std::ptr::null_mut();
-        let model_ptr = model.ptr.lock()?;
+        let model_ptr = model.ptr;
         unsafe {
-            check_status(OgaCreateGeneratorParams(*model_ptr, &mut ptr))?;
+            check_status(OgaCreateGeneratorParams(model_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn set_search_number(&self, name: &str, value: f64) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         unsafe {
             check_status(OgaGeneratorParamsSetSearchNumber(
-                *ptr,
+                ptr,
                 c_name.as_ptr(),
                 value,
             ))?;
@@ -51,25 +45,21 @@ impl GeneratorParams {
     }
 
     pub fn set_search_bool(&self, name: &str, value: bool) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         unsafe {
-            check_status(OgaGeneratorParamsSetSearchBool(
-                *ptr,
-                c_name.as_ptr(),
-                value,
-            ))?;
+            check_status(OgaGeneratorParamsSetSearchBool(ptr, c_name.as_ptr(), value))?;
         }
         Ok(())
     }
 
     pub fn set_guidance(&self, type_: &str, data: &str, enable_ff_tokens: bool) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_type = CString::new(type_)?;
         let c_data = CString::new(data)?;
         unsafe {
             check_status(OgaGeneratorParamsSetGuidance(
-                *ptr,
+                ptr,
                 c_type.as_ptr(),
                 c_data.as_ptr(),
                 enable_ff_tokens,
@@ -79,12 +69,12 @@ impl GeneratorParams {
     }
 
     pub fn get_search_number(&self, name: &str) -> Result<f64> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         let mut value = 0.0;
         unsafe {
             check_status(OgaGeneratorParamsGetSearchNumber(
-                *ptr,
+                ptr,
                 c_name.as_ptr(),
                 &mut value,
             ))?;
@@ -93,12 +83,12 @@ impl GeneratorParams {
     }
 
     pub fn get_search_bool(&self, name: &str) -> Result<bool> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         let mut value = false;
         unsafe {
             check_status(OgaGeneratorParamsGetSearchBool(
-                *ptr,
+                ptr,
                 c_name.as_ptr(),
                 &mut value,
             ))?;
@@ -109,78 +99,55 @@ impl GeneratorParams {
 
 impl Drop for GeneratorParams {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyGeneratorParams(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyGeneratorParams(self.ptr);
             }
         }
     }
 }
 
 pub struct Generator {
-    pub(crate) ptr: Arc<Mutex<*mut OgaGenerator>>,
+    pub(crate) ptr: *mut OgaGenerator,
 }
-
-unsafe impl Send for Generator {}
-unsafe impl Sync for Generator {}
 
 impl Generator {
     pub fn new(model: &Model, params: &GeneratorParams) -> Result<Self> {
         let mut ptr: *mut OgaGenerator = std::ptr::null_mut();
-        let model_ptr = model.ptr.lock()?;
-        let params_ptr = params.ptr.lock()?;
+        let model_ptr = model.ptr;
+        let params_ptr = params.ptr;
         unsafe {
-            check_status(OgaCreateGenerator(*model_ptr, *params_ptr, &mut ptr))?;
+            check_status(OgaCreateGenerator(model_ptr, params_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     /// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-/// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-/// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-/// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-/// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-/// Returns true if the generator has finished generating all the sequences.
-/// * generator The generator to check if it is done with generating all sequences.
-/// Returns: True if the generator has finished generating all the sequences, false otherwise.
-/// /
-pub fn is_done(&self) -> Result<bool> {
-        let ptr = self.ptr.lock()?;
-        unsafe { Ok(OgaGenerator_IsDone(*ptr)) }
+    /// * generator The generator to check if it is done with generating all sequences.
+    /// Returns: True if the generator has finished generating all the sequences, false otherwise.
+    /// /
+    /// Returns true if the generator has finished generating all the sequences.
+    /// * generator The generator to check if it is done with generating all sequences.
+    /// Returns: True if the generator has finished generating all the sequences, false otherwise.
+    /// /
+    pub fn is_done(&self) -> Result<bool> {
+        let _ptr = self.ptr;
+        unsafe { Ok(OgaGenerator_IsDone(self.ptr)) }
     }
 
     pub fn generate_next_token(&self) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let _ptr = self.ptr;
         unsafe {
-            check_status(OgaGenerator_GenerateNextToken(*ptr))?;
+            check_status(OgaGenerator_GenerateNextToken(self.ptr))?;
         }
         Ok(())
     }
 
     pub fn append_tokens(&self, tokens: &[i32]) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         unsafe {
             check_status(OgaGenerator_AppendTokens(
-                *ptr,
+                ptr,
                 tokens.as_ptr(),
                 tokens.len(),
             ))?;
@@ -189,73 +156,53 @@ pub fn is_done(&self) -> Result<bool> {
     }
 
     pub fn append_token_sequences(&self, sequences: &Sequences) -> Result<()> {
-        let ptr = self.ptr.lock()?;
-        let seq_ptr = sequences.ptr.lock()?;
+        let ptr = self.ptr;
+        let seq_ptr = sequences.ptr;
         unsafe {
-            check_status(OgaGenerator_AppendTokenSequences(*ptr, *seq_ptr))?;
+            check_status(OgaGenerator_AppendTokenSequences(ptr, seq_ptr))?;
         }
         Ok(())
     }
 
     pub fn set_model_input(&self, name: &str, tensor: &Tensor) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
-        let tensor_ptr = tensor.ptr.lock()?;
+        let tensor_ptr = tensor.ptr;
         unsafe {
-            check_status(OgaGenerator_SetModelInput(
-                *ptr,
-                c_name.as_ptr(),
-                *tensor_ptr,
-            ))?;
+            check_status(OgaGenerator_SetModelInput(ptr, c_name.as_ptr(), tensor_ptr))?;
         }
         Ok(())
     }
 
     pub fn set_inputs(&self, inputs: &NamedTensors) -> Result<()> {
-        let ptr = self.ptr.lock()?;
-        let inputs_ptr = inputs.ptr.lock()?;
+        let ptr = self.ptr;
+        let inputs_ptr = inputs.ptr;
         unsafe {
-            check_status(OgaGenerator_SetInputs(*ptr, *inputs_ptr))?;
+            check_status(OgaGenerator_SetInputs(ptr, inputs_ptr))?;
         }
         Ok(())
     }
 
     /// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-/// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-/// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-/// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-/// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-/// Returns the number of tokens in the generator
-/// * generator The generator containing the appended tokens.
-/// Returns: The number of tokens that have been added.
-/// /
-pub fn token_count(&self) -> Result<usize> {
-        let ptr = self.ptr.lock()?;
-        unsafe { Ok(OgaGenerator_TokenCount(*ptr)) }
+    /// * generator The generator containing the appended tokens.
+    /// Returns: The number of tokens that have been added.
+    /// /
+    /// Returns the number of tokens in the generator
+    /// * generator The generator containing the appended tokens.
+    /// Returns: The number of tokens that have been added.
+    /// /
+    pub fn token_count(&self) -> Result<usize> {
+        let _ptr = self.ptr;
+        unsafe { Ok(OgaGenerator_TokenCount(self.ptr)) }
     }
 
     pub fn get_next_tokens(&self) -> Result<Vec<i32>> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut out_ptr: *const i32 = std::ptr::null();
         let mut out_count: usize = 0;
         unsafe {
             check_status(OgaGenerator_GetNextTokens(
-                *ptr,
+                ptr,
                 &mut out_ptr,
                 &mut out_count,
             ))?;
@@ -265,12 +212,12 @@ pub fn token_count(&self) -> Result<usize> {
     }
 
     pub fn set_runtime_option(&self, key: &str, value: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_key = CString::new(key)?;
         let c_value = CString::new(value)?;
         unsafe {
             check_status(OgaGenerator_SetRuntimeOption(
-                *ptr,
+                ptr,
                 c_key.as_ptr(),
                 c_value.as_ptr(),
             ))?;
@@ -279,34 +226,30 @@ pub fn token_count(&self) -> Result<usize> {
     }
 
     pub fn rewind_to(&self, new_length: usize) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         unsafe {
-            check_status(OgaGenerator_RewindTo(*ptr, new_length))?;
+            check_status(OgaGenerator_RewindTo(ptr, new_length))?;
         }
         Ok(())
     }
 
-    pub fn get_input(&self, name: &str) -> Result<Tensor> {
-        let ptr = self.ptr.lock()?;
+    pub fn get_input(&self, name: &str) -> Result<Tensor<'_>> {
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         let mut tensor_ptr: *mut ort_genai_sys::OgaTensor = std::ptr::null_mut();
         unsafe {
-            check_status(OgaGenerator_GetInput(
-                *ptr,
-                c_name.as_ptr(),
-                &mut tensor_ptr,
-            ))?;
+            check_status(OgaGenerator_GetInput(ptr, c_name.as_ptr(), &mut tensor_ptr))?;
         }
         Ok(Tensor::from_ptr(tensor_ptr))
     }
 
-    pub fn get_output(&self, name: &str) -> Result<Tensor> {
-        let ptr = self.ptr.lock()?;
+    pub fn get_output(&self, name: &str) -> Result<Tensor<'_>> {
+        let ptr = self.ptr;
         let c_name = CString::new(name)?;
         let mut tensor_ptr: *mut ort_genai_sys::OgaTensor = std::ptr::null_mut();
         unsafe {
             check_status(OgaGenerator_GetOutput(
-                *ptr,
+                ptr,
                 c_name.as_ptr(),
                 &mut tensor_ptr,
             ))?;
@@ -314,112 +257,60 @@ pub fn token_count(&self) -> Result<usize> {
         Ok(Tensor::from_ptr(tensor_ptr))
     }
 
-    pub fn get_logits(&self) -> Result<Tensor> {
-        let ptr = self.ptr.lock()?;
+    pub fn get_logits(&self) -> Result<Tensor<'_>> {
+        let ptr = self.ptr;
         let mut tensor_ptr: *mut ort_genai_sys::OgaTensor = std::ptr::null_mut();
         unsafe {
-            check_status(OgaGenerator_GetLogits(*ptr, &mut tensor_ptr))?;
+            check_status(OgaGenerator_GetLogits(ptr, &mut tensor_ptr))?;
         }
         Ok(Tensor::from_ptr(tensor_ptr))
     }
 
     pub fn set_logits(&self, tensor: &Tensor) -> Result<()> {
-        let ptr = self.ptr.lock()?;
-        let tensor_ptr = tensor.ptr.lock()?;
+        let ptr = self.ptr;
+        let tensor_ptr = tensor.ptr;
         unsafe {
-            check_status(OgaGenerator_SetLogits(*ptr, *tensor_ptr))?;
+            check_status(OgaGenerator_SetLogits(ptr, tensor_ptr))?;
         }
         Ok(())
     }
 
     /// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-/// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-/// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-/// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-/// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-/// Returns the number of tokens in the sequence at the given index.
-/// * generator The generator to get the count of the tokens for the sequence at the given index.
-/// * index The given index.
-/// Returns: The number tokens in the sequence at the given index.
-/// /
-pub fn get_sequence_count(&self, index: usize) -> Result<usize> {
-        let ptr = self.ptr.lock()?;
-        unsafe { Ok(OgaGenerator_GetSequenceCount(*ptr, index)) }
+    /// * generator The generator to get the count of the tokens for the sequence at the given index.
+    /// * index The given index.
+    /// Returns: The number tokens in the sequence at the given index.
+    /// /
+    /// Returns the number of tokens in the sequence at the given index.
+    /// * generator The generator to get the count of the tokens for the sequence at the given index.
+    /// * index The given index.
+    /// Returns: The number tokens in the sequence at the given index.
+    /// /
+    pub fn get_sequence_count(&self, index: usize) -> Result<usize> {
+        let ptr = self.ptr;
+        unsafe { Ok(OgaGenerator_GetSequenceCount(ptr, index)) }
     }
 
     /// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-/// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
-/// is given by Generator_GetSequenceCount
-/// * generator The generator to get the sequence data for the sequence at the given index.
-/// * index The given index.
-/// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
-/// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
-/// be used after the Generator is destroyed.
-/// /
-pub fn get_sequence_data(&self, index: usize) -> Result<Vec<i32>> {
-        let ptr = self.ptr.lock()?;
+    /// is given by Generator_GetSequenceCount
+    /// * generator The generator to get the sequence data for the sequence at the given index.
+    /// * index The given index.
+    /// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+    /// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+    /// be used after the Generator is destroyed.
+    /// /
+    /// Returns a pointer to the sequence data at the given index. The number of tokens in the sequence
+    /// is given by Generator_GetSequenceCount
+    /// * generator The generator to get the sequence data for the sequence at the given index.
+    /// * index The given index.
+    /// Returns: The pointer to the sequence data at the given index. The sequence data is owned by the Generator
+    /// and will be freed when the Generator is destroyed. The caller must copy the data if it needs to
+    /// be used after the Generator is destroyed.
+    /// /
+    pub fn get_sequence_data(&self, index: usize) -> Result<Vec<i32>> {
+        let ptr = self.ptr;
         unsafe {
-            let count = OgaGenerator_GetSequenceCount(*ptr, index);
-            let data_ptr = OgaGenerator_GetSequenceData(*ptr, index);
+            let count = OgaGenerator_GetSequenceCount(ptr, index);
+            let data_ptr = OgaGenerator_GetSequenceData(ptr, index);
             if data_ptr.is_null() {
                 return Ok(Vec::new());
             }
@@ -431,11 +322,9 @@ pub fn get_sequence_data(&self, index: usize) -> Result<Vec<i32>> {
 
 impl Drop for Generator {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyGenerator(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyGenerator(self.ptr);
             }
         }
     }
@@ -443,31 +332,15 @@ impl Drop for Generator {
 
 impl Generator {
     /// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-/// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-/// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-/// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-/// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-/// Returns true if the session has been terminated.
-/// * generator The generator to add the inputs to.
-/// Returns: True if the session has been terminated, false otherwise.
-/// /
-pub fn is_session_terminated(&self) -> Result<bool> {
-        let ptr = self.ptr.lock()?;
-        unsafe { Ok(ort_genai_sys::OgaGenerator_IsSessionTerminated(*ptr)) }
+    /// * generator The generator to add the inputs to.
+    /// Returns: True if the session has been terminated, false otherwise.
+    /// /
+    /// Returns true if the session has been terminated.
+    /// * generator The generator to add the inputs to.
+    /// Returns: True if the session has been terminated, false otherwise.
+    /// /
+    pub fn is_session_terminated(&self) -> Result<bool> {
+        let _ptr = self.ptr;
+        unsafe { Ok(ort_genai_sys::OgaGenerator_IsSessionTerminated(self.ptr)) }
     }
 }

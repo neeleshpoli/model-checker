@@ -1,5 +1,4 @@
 use std::ffi::{CStr, CString};
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaCreateMultiModalProcessor, OgaCreateTokenizerStreamFromProcessor,
@@ -20,34 +19,29 @@ use crate::tokenizer::TokenizerStream;
 use crate::audios::Audios;
 
 pub struct MultiModalProcessor {
-    pub(crate) ptr: Arc<Mutex<*mut OgaMultiModalProcessor>>,
+    pub(crate) ptr: *mut OgaMultiModalProcessor,
 }
-
-unsafe impl Send for MultiModalProcessor {}
-unsafe impl Sync for MultiModalProcessor {}
 
 impl MultiModalProcessor {
     pub fn new(model: &Model) -> Result<Self> {
         let mut ptr: *mut OgaMultiModalProcessor = std::ptr::null_mut();
-        let model_ptr = model.ptr.lock()?;
+        let model_ptr = model.ptr;
         unsafe {
-            check_status(OgaCreateMultiModalProcessor(*model_ptr, &mut ptr))?;
+            check_status(OgaCreateMultiModalProcessor(model_ptr, &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
-    pub fn process_images(&self, prompt: &str, images: &Images) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
+    pub fn process_images(&self, prompt: &str, images: &Images) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
         let c_prompt = CString::new(prompt)?;
-        let images_ptr = images.ptr.lock()?;
+        let images_ptr = images.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessImages(
-                *ptr,
+                ptr,
                 c_prompt.as_ptr(),
-                *images_ptr,
+                images_ptr,
                 &mut out_ptr,
             ))?;
         }
@@ -58,32 +52,32 @@ impl MultiModalProcessor {
         &self,
         prompts: &StringArray,
         images: &Images,
-    ) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
-        let prompts_ptr = prompts.ptr.lock()?;
-        let images_ptr = images.ptr.lock()?;
+    ) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
+        let prompts_ptr = prompts.ptr;
+        let images_ptr = images.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessImagesAndPrompts(
-                *ptr,
-                *prompts_ptr,
-                *images_ptr,
+                ptr,
+                prompts_ptr,
+                images_ptr,
                 &mut out_ptr,
             ))?;
         }
         Ok(NamedTensors::from_ptr(out_ptr))
     }
 
-    pub fn process_audios(&self, prompt: &str, audios: &Audios) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
+    pub fn process_audios(&self, prompt: &str, audios: &Audios) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
         let c_prompt = CString::new(prompt)?;
-        let audios_ptr = audios.ptr.lock()?;
+        let audios_ptr = audios.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessAudios(
-                *ptr,
+                ptr,
                 c_prompt.as_ptr(),
-                *audios_ptr,
+                audios_ptr,
                 &mut out_ptr,
             ))?;
         }
@@ -94,16 +88,16 @@ impl MultiModalProcessor {
         &self,
         prompts: &StringArray,
         audios: &Audios,
-    ) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
-        let prompts_ptr = prompts.ptr.lock()?;
-        let audios_ptr = audios.ptr.lock()?;
+    ) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
+        let prompts_ptr = prompts.ptr;
+        let audios_ptr = audios.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessAudiosAndPrompts(
-                *ptr,
-                *prompts_ptr,
-                *audios_ptr,
+                ptr,
+                prompts_ptr,
+                audios_ptr,
                 &mut out_ptr,
             ))?;
         }
@@ -115,18 +109,18 @@ impl MultiModalProcessor {
         prompt: &str,
         images: &Images,
         audios: &Audios,
-    ) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
+    ) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
         let c_prompt = CString::new(prompt)?;
-        let images_ptr = images.ptr.lock()?;
-        let audios_ptr = audios.ptr.lock()?;
+        let images_ptr = images.ptr;
+        let audios_ptr = audios.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessImagesAndAudios(
-                *ptr,
+                ptr,
                 c_prompt.as_ptr(),
-                *images_ptr,
-                *audios_ptr,
+                images_ptr,
+                audios_ptr,
                 &mut out_ptr,
             ))?;
         }
@@ -138,18 +132,18 @@ impl MultiModalProcessor {
         prompts: &StringArray,
         images: &Images,
         audios: &Audios,
-    ) -> Result<NamedTensors> {
-        let ptr = self.ptr.lock()?;
-        let prompts_ptr = prompts.ptr.lock()?;
-        let images_ptr = images.ptr.lock()?;
-        let audios_ptr = audios.ptr.lock()?;
+    ) -> Result<NamedTensors<'_>> {
+        let ptr = self.ptr;
+        let prompts_ptr = prompts.ptr;
+        let images_ptr = images.ptr;
+        let audios_ptr = audios.ptr;
         let mut out_ptr: *mut ort_genai_sys::OgaNamedTensors = std::ptr::null_mut();
         unsafe {
             check_status(OgaProcessorProcessImagesAndAudiosAndPrompts(
-                *ptr,
-                *prompts_ptr,
-                *images_ptr,
-                *audios_ptr,
+                ptr,
+                prompts_ptr,
+                images_ptr,
+                audios_ptr,
                 &mut out_ptr,
             ))?;
         }
@@ -157,11 +151,11 @@ impl MultiModalProcessor {
     }
 
     pub fn decode(&self, tokens: &[i32]) -> Result<String> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut out_str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaProcessorDecode(
-                *ptr,
+                ptr,
                 tokens.as_ptr(),
                 tokens.len(),
                 &mut out_str_ptr,
@@ -174,24 +168,20 @@ impl MultiModalProcessor {
     }
 
     pub fn create_stream(&self) -> Result<TokenizerStream> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let mut stream_ptr: *mut ort_genai_sys::OgaTokenizerStream = std::ptr::null_mut();
         unsafe {
-            check_status(OgaCreateTokenizerStreamFromProcessor(*ptr, &mut stream_ptr))?;
+            check_status(OgaCreateTokenizerStreamFromProcessor(ptr, &mut stream_ptr))?;
         }
-        Ok(TokenizerStream {
-            ptr: Arc::new(Mutex::new(stream_ptr)),
-        })
+        Ok(TokenizerStream { ptr: stream_ptr })
     }
 }
 
 impl Drop for MultiModalProcessor {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyMultiModalProcessor(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyMultiModalProcessor(self.ptr);
             }
         }
     }

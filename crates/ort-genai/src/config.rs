@@ -1,5 +1,4 @@
 use std::ffi::CString;
-use std::sync::{Arc, Mutex};
 
 use ort_genai_sys::{
     OgaConfig, OgaConfigAppendProvider, OgaConfigClearDecoderProviderOptionsHardwareDeviceId,
@@ -14,11 +13,8 @@ use ort_genai_sys::{
 use crate::error::{check_status, Result};
 
 pub struct Config {
-    pub(crate) ptr: Arc<Mutex<*mut OgaConfig>>,
+    pub(crate) ptr: *mut OgaConfig,
 }
-
-unsafe impl Send for Config {}
-unsafe impl Sync for Config {}
 
 impl Config {
     pub fn new(config_path: &str) -> Result<Self> {
@@ -27,9 +23,7 @@ impl Config {
         unsafe {
             check_status(OgaCreateConfig(c_path.as_ptr(), &mut ptr))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn from_package_ep(config_path: &str, ep: &str) -> Result<Self> {
@@ -43,36 +37,34 @@ impl Config {
                 &mut ptr,
             ))?;
         }
-        Ok(Self {
-            ptr: Arc::new(Mutex::new(ptr)),
-        })
+        Ok(Self { ptr: ptr })
     }
 
     pub fn clear_providers(&self) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let _ptr = self.ptr;
         unsafe {
-            check_status(OgaConfigClearProviders(*ptr))?;
+            check_status(OgaConfigClearProviders(self.ptr))?;
         }
         Ok(())
     }
 
     pub fn append_provider(&self, provider: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
-            check_status(OgaConfigAppendProvider(*ptr, c_provider.as_ptr()))?;
+            check_status(OgaConfigAppendProvider(ptr, c_provider.as_ptr()))?;
         }
         Ok(())
     }
 
     pub fn set_provider_option(&self, provider: &str, key: &str, value: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         let c_key = CString::new(key)?;
         let c_value = CString::new(value)?;
         unsafe {
             check_status(OgaConfigSetProviderOption(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
                 c_key.as_ptr(),
                 c_value.as_ptr(),
@@ -86,12 +78,12 @@ impl Config {
         provider: &str,
         hardware_device_type: &str,
     ) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         let c_device_type = CString::new(hardware_device_type)?;
         unsafe {
             check_status(OgaConfigSetDecoderProviderOptionsHardwareDeviceType(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
                 c_device_type.as_ptr(),
             ))?;
@@ -104,11 +96,11 @@ impl Config {
         provider: &str,
         hardware_device_id: u32,
     ) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
             check_status(OgaConfigSetDecoderProviderOptionsHardwareDeviceId(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
                 hardware_device_id,
             ))?;
@@ -121,11 +113,11 @@ impl Config {
         provider: &str,
         hardware_vendor_id: u32,
     ) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
             check_status(OgaConfigSetDecoderProviderOptionsHardwareVendorId(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
                 hardware_vendor_id,
             ))?;
@@ -137,11 +129,11 @@ impl Config {
         &self,
         provider: &str,
     ) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
             check_status(OgaConfigClearDecoderProviderOptionsHardwareDeviceType(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
             ))?;
         }
@@ -149,11 +141,11 @@ impl Config {
     }
 
     pub fn clear_decoder_provider_options_hardware_device_id(&self, provider: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
             check_status(OgaConfigClearDecoderProviderOptionsHardwareDeviceId(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
             ))?;
         }
@@ -161,11 +153,11 @@ impl Config {
     }
 
     pub fn clear_decoder_provider_options_hardware_vendor_id(&self, provider: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_provider = CString::new(provider)?;
         unsafe {
             check_status(OgaConfigClearDecoderProviderOptionsHardwareVendorId(
-                *ptr,
+                ptr,
                 c_provider.as_ptr(),
             ))?;
         }
@@ -175,11 +167,9 @@ impl Config {
 
 impl Drop for Config {
     fn drop(&mut self) {
-        if let Ok(ptr) = self.ptr.lock() {
-            if !ptr.is_null() {
-                unsafe {
-                    OgaDestroyConfig(*ptr);
-                }
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyConfig(self.ptr);
             }
         }
     }
@@ -187,11 +177,11 @@ impl Drop for Config {
 
 impl Config {
     pub fn add_model_data(&self, model_filename: &str, model_data: &[u8]) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_filename = CString::new(model_filename)?;
         unsafe {
             check_status(ort_genai_sys::OgaConfigAddModelData(
-                *ptr,
+                ptr,
                 c_filename.as_ptr(),
                 model_data.as_ptr() as *const std::ffi::c_void,
                 model_data.len(),
@@ -201,11 +191,11 @@ impl Config {
     }
 
     pub fn remove_model_data(&self, model_filename: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_filename = CString::new(model_filename)?;
         unsafe {
             check_status(ort_genai_sys::OgaConfigRemoveModelData(
-                *ptr,
+                ptr,
                 c_filename.as_ptr(),
             ))?;
         }
@@ -213,10 +203,10 @@ impl Config {
     }
 
     pub fn overlay(&self, json: &str) -> Result<()> {
-        let ptr = self.ptr.lock()?;
+        let ptr = self.ptr;
         let c_json = CString::new(json)?;
         unsafe {
-            check_status(ort_genai_sys::OgaConfigOverlay(*ptr, c_json.as_ptr()))?;
+            check_status(ort_genai_sys::OgaConfigOverlay(ptr, c_json.as_ptr()))?;
         }
         Ok(())
     }
