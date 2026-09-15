@@ -63,9 +63,9 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.41.3"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d72db2750faea2ca5edbf6d0c50277a89dc8f75f5e6ddd695ef30f75e335019b"
+checksum = "3540b785fcd10be9458fdd8db9a63ea5bcd4b191ef557eaf2730fe0c5881c3e8"
 dependencies = [
  "bytes",
  "derive_builder",
@@ -2614,7 +2614,7 @@ dependencies = [
 name = "win-reactor"
 version = "0.1.0"
 dependencies = [
- "async-openai 0.41.3",
+ "async-openai 0.42.0",
  "foundry-local-sdk",
  "ort-genai",
  "serde",
