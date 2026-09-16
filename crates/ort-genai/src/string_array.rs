@@ -70,7 +70,6 @@ impl StringArray {
             check_status(OgaStringArrayGetString(ptr, index, &mut str_ptr))?;
             let c_str = CStr::from_ptr(str_ptr);
             let s = c_str.to_string_lossy().into_owned();
-            ort_genai_sys::OgaDestroyString(str_ptr);
             Ok(s)
         }
     }

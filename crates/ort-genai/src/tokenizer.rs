@@ -213,9 +213,9 @@ impl Tokenizer {
     ) -> Result<String> {
         let ptr = self.ptr;
 
-        let c_template = template_str.map(|s| CString::new(s).unwrap());
+        let c_template = template_str.map(CString::new).transpose()?;
         let c_messages = CString::new(messages)?;
-        let c_tools = tools.map(|s| CString::new(s).unwrap());
+        let c_tools = tools.map(CString::new).transpose()?;
 
         let mut out_str_ptr: *const std::ffi::c_char = std::ptr::null();
 
@@ -268,7 +268,6 @@ impl TokenizerStream {
             check_status(OgaTokenizerStreamDecode(ptr, token, &mut out_str_ptr))?;
             let c_str = CStr::from_ptr(out_str_ptr);
             let s = c_str.to_string_lossy().into_owned();
-            ort_genai_sys::OgaDestroyString(out_str_ptr);
             Ok(s)
         }
     }
