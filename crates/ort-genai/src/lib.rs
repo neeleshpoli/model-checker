@@ -130,23 +130,24 @@ pub fn set_log_string(name: &str, value: &str) -> error::Result<()> {
     Ok(())
 }
 
-use std::sync::RwLock;
-lazy_static::lazy_static! {
-    static ref LOG_CALLBACK: RwLock<Option<fn(&str, usize)>> = RwLock::new(None);
-}
+use std::sync::{LazyLock, RwLock};
 
-unsafe extern "C" fn log_callback_trampoline(string: *const std::ffi::c_char, length: usize) { unsafe {
-    if let Ok(guard) = LOG_CALLBACK.read() {
-        if let Some(cb) = *guard {
-            if !string.is_null() {
-                let c_str = std::ffi::CStr::from_ptr(string);
-                if let Ok(rust_str) = c_str.to_str() {
-                    cb(rust_str, length);
+static LOG_CALLBACK: LazyLock<RwLock<Option<fn(&str, usize)>>> = LazyLock::new(|| RwLock::new(None));
+
+unsafe extern "C" fn log_callback_trampoline(string: *const std::ffi::c_char, length: usize) {
+    unsafe {
+        if let Ok(guard) = LOG_CALLBACK.read() {
+            if let Some(cb) = *guard {
+                if !string.is_null() {
+                    let c_str = std::ffi::CStr::from_ptr(string);
+                    if let Ok(rust_str) = c_str.to_str() {
+                        cb(rust_str, length);
+                    }
                 }
             }
         }
     }
-}}
+}
 
 pub fn set_log_callback(callback: Option<fn(&str, usize)>) -> error::Result<()> {
     if let Ok(mut guard) = LOG_CALLBACK.write() {
