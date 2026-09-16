@@ -1,0 +1,90 @@
+use ort_genai_sys::{
+    OgaCreateRequest, OgaDestroyRequest, OgaRequest, OgaRequestAddTokens, OgaRequestGetOpaqueData,
+    OgaRequestGetUnseenToken, OgaRequestHasUnseenTokens, OgaRequestIsDone, OgaRequestSetOpaqueData,
+};
+
+use crate::error::{check_status, Result};
+use crate::generator::GeneratorParams;
+use crate::sequences::Sequences;
+
+pub struct Request {
+    pub(crate) ptr: *mut OgaRequest,
+}
+
+impl Request {
+    pub fn new(params: &GeneratorParams) -> Result<Self> {
+        let mut ptr: *mut OgaRequest = std::ptr::null_mut();
+        let params_ptr = params.ptr;
+        unsafe {
+            check_status(OgaCreateRequest(params_ptr, &mut ptr))?;
+        }
+        Ok(Self { ptr: ptr })
+    }
+
+    pub(crate) fn from_ptr(ptr: *mut OgaRequest) -> Self {
+        Self { ptr: ptr }
+    }
+
+    pub fn add_tokens(&self, tokens: &Sequences) -> Result<()> {
+        let ptr = self.ptr;
+        let tokens_ptr = tokens.ptr;
+        unsafe {
+            check_status(OgaRequestAddTokens(ptr, tokens_ptr))?;
+        }
+        Ok(())
+    }
+
+    pub fn set_opaque_data(&self, data: usize) -> Result<()> {
+        let ptr = self.ptr;
+        unsafe {
+            check_status(OgaRequestSetOpaqueData(ptr, data as *mut std::ffi::c_void))?;
+        }
+        Ok(())
+    }
+
+    pub fn get_opaque_data(&self) -> Result<usize> {
+        let ptr = self.ptr;
+        let mut out: *mut std::ffi::c_void = std::ptr::null_mut();
+        unsafe {
+            check_status(OgaRequestGetOpaqueData(ptr, &mut out))?;
+        }
+        Ok(out as usize)
+    }
+
+    pub fn has_unseen_tokens(&self) -> Result<bool> {
+        let ptr = self.ptr;
+        let mut out: bool = false;
+        unsafe {
+            check_status(OgaRequestHasUnseenTokens(ptr, &mut out))?;
+        }
+        Ok(out)
+    }
+
+    pub fn get_unseen_token(&self) -> Result<i32> {
+        let ptr = self.ptr;
+        let mut out: i32 = 0;
+        unsafe {
+            check_status(OgaRequestGetUnseenToken(ptr, &mut out))?;
+        }
+        Ok(out)
+    }
+
+    pub fn is_done(&self) -> Result<bool> {
+        let ptr = self.ptr;
+        let mut out: bool = false;
+        unsafe {
+            check_status(OgaRequestIsDone(ptr, &mut out))?;
+        }
+        Ok(out)
+    }
+}
+
+impl Drop for Request {
+    fn drop(&mut self) {
+        if !self.ptr.is_null() {
+            unsafe {
+                OgaDestroyRequest(self.ptr);
+            }
+        }
+    }
+}
