@@ -80,6 +80,29 @@ impl From<ElementType> for OgaElementType {
     }
 }
 
+impl ElementType {
+    pub fn byte_size(&self) -> Result<usize> {
+        match self {
+            ElementType::Float32 => Ok(4),
+            ElementType::Uint8 => Ok(1),
+            ElementType::Int8 => Ok(1),
+            ElementType::Uint16 => Ok(2),
+            ElementType::Int16 => Ok(2),
+            ElementType::Int32 => Ok(4),
+            ElementType::Int64 => Ok(8),
+            ElementType::Bool => Ok(1),
+            ElementType::Float16 => Ok(2),
+            ElementType::Float64 => Ok(8),
+            ElementType::Uint32 => Ok(4),
+            ElementType::Uint64 => Ok(8),
+            ElementType::Complex64 => Ok(8),
+            ElementType::Complex128 => Ok(16),
+            ElementType::Bfloat16 => Ok(2),
+            _ => Err(crate::error::Error::OgaError(format!("Unsupported ElementType byte_size query for {:?}", self))),
+        }
+    }
+}
+
 use std::marker::PhantomData;
 
 pub struct Tensor<'a> {
@@ -93,6 +116,30 @@ impl<'a> Tensor<'a> {
         shape: &[i64],
         element_type: ElementType,
     ) -> Result<Self> {
+        let mut elements: usize = 1;
+        for &dim in shape {
+            if dim < 0 {
+                return Err(crate::error::Error::OgaError("Negative dimension in shape".into()));
+            }
+            elements = elements.checked_mul(dim as usize).ok_or_else(|| {
+                crate::error::Error::OgaError("Shape dimensions overflow".into())
+            })?;
+        }
+
+        let expected_bytes = elements.checked_mul(element_type.byte_size()?).ok_or_else(|| {
+            crate::error::Error::OgaError("Shape byte size overflow".into())
+        })?;
+
+        let provided_bytes = data.len().checked_mul(std::mem::size_of::<T>()).ok_or_else(|| {
+            crate::error::Error::OgaError("Data buffer byte size overflow".into())
+        })?;
+
+        if provided_bytes < expected_bytes {
+            return Err(crate::error::Error::OgaError(
+                "Data buffer byte size is smaller than the specified shape requires".into(),
+            ));
+        }
+
         let mut ptr: *mut OgaTensor = std::ptr::null_mut();
         let oga_type = element_type.into();
         unsafe {
@@ -158,8 +205,20 @@ impl<'a> Tensor<'a> {
             let mut data_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
             check_status(OgaTensorGetData(ptr, &mut data_ptr))?;
 
+        if data_ptr.is_null() {
+            return Err(crate::error::Error::NullPointer);
+        }
+
             let shape = self.get_shape()?;
-            let size: usize = shape.iter().map(|&x| x as usize).product();
+        let mut size: usize = 1;
+        for &dim in &shape {
+            if dim < 0 {
+                return Err(crate::error::Error::OgaError("Negative dimension in shape".into()));
+            }
+            size = size.checked_mul(dim as usize).ok_or_else(|| {
+                crate::error::Error::OgaError("Shape dimensions overflow".into())
+            })?;
+        }
 
             let slice = std::slice::from_raw_parts_mut(data_ptr as *mut T, size);
             Ok(slice)

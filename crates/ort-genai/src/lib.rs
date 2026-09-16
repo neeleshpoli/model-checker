@@ -139,8 +139,8 @@ unsafe extern "C" fn log_callback_trampoline(string: *const std::ffi::c_char, le
         if let Ok(guard) = LOG_CALLBACK.read() {
             if let Some(cb) = *guard {
                 if !string.is_null() {
-                    let c_str = std::ffi::CStr::from_ptr(string);
-                    if let Ok(rust_str) = c_str.to_str() {
+                    let slice = std::slice::from_raw_parts(string as *const u8, length);
+                    if let Ok(rust_str) = std::str::from_utf8(slice) {
                         cb(rust_str, length);
                     }
                 }
