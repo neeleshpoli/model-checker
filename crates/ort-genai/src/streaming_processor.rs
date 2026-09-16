@@ -71,6 +71,9 @@ impl StreamingProcessor {
                 c_key.as_ptr(),
                 &mut value_ptr,
             ))?;
+            if value_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(value_ptr);
             let s = c_str.to_string_lossy().into_owned();
             ort_genai_sys::OgaDestroyString(value_ptr);

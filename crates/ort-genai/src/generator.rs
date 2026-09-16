@@ -206,6 +206,9 @@ impl Generator {
                 &mut out_ptr,
                 &mut out_count,
             ))?;
+            if out_ptr.is_null() {
+                return Ok(Vec::new());
+            }
             let slice = std::slice::from_raw_parts(out_ptr, out_count);
             Ok(slice.to_vec())
         }

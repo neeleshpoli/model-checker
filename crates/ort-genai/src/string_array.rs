@@ -68,6 +68,9 @@ impl StringArray {
         let mut str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaStringArrayGetString(ptr, index, &mut str_ptr))?;
+            if str_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(str_ptr);
             let s = c_str.to_string_lossy().into_owned();
             Ok(s)

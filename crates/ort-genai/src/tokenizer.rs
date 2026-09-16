@@ -85,6 +85,9 @@ impl Tokenizer {
                 &mut token_ids_ptr,
                 &mut count,
             ))?;
+            if token_ids_ptr.is_null() {
+                return Ok(Vec::new());
+            }
             let slice = std::slice::from_raw_parts(token_ids_ptr, count);
             Ok(slice.to_vec())
         }
@@ -197,6 +200,9 @@ impl Tokenizer {
                 &mut out_str_ptr,
             ))?;
 
+            if out_str_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(out_str_ptr);
             let s = c_str.to_string_lossy().into_owned();
             OgaDestroyString(out_str_ptr);
@@ -229,6 +235,9 @@ impl Tokenizer {
                 &mut out_str_ptr,
             ))?;
 
+            if out_str_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(out_str_ptr);
             let s = c_str.to_string_lossy().into_owned();
             OgaDestroyString(out_str_ptr);
@@ -266,8 +275,12 @@ impl TokenizerStream {
         let mut out_str_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaTokenizerStreamDecode(ptr, token, &mut out_str_ptr))?;
+            if out_str_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(out_str_ptr);
             let s = c_str.to_string_lossy().into_owned();
+            ort_genai_sys::OgaDestroyString(out_str_ptr);
             Ok(s)
         }
     }

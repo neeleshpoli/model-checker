@@ -160,6 +160,9 @@ impl MultiModalProcessor {
                 tokens.len(),
                 &mut out_str_ptr,
             ))?;
+            if out_str_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(out_str_ptr);
             let s = c_str.to_string_lossy().into_owned();
             OgaDestroyString(out_str_ptr);

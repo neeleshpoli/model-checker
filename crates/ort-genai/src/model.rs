@@ -51,6 +51,9 @@ impl Model {
         let mut type_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaModelGetType(ptr, &mut type_ptr))?;
+            if type_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(type_ptr);
             let s = c_str.to_string_lossy().into_owned();
             ort_genai_sys::OgaDestroyString(type_ptr);
@@ -63,6 +66,9 @@ impl Model {
         let mut device_type_ptr: *const std::ffi::c_char = std::ptr::null();
         unsafe {
             check_status(OgaModelGetDeviceType(ptr, &mut device_type_ptr))?;
+            if device_type_ptr.is_null() {
+                return Ok(String::new());
+            }
             let c_str = CStr::from_ptr(device_type_ptr);
             let s = c_str.to_string_lossy().into_owned();
             ort_genai_sys::OgaDestroyString(device_type_ptr);
