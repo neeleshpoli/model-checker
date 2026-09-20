@@ -79,6 +79,10 @@ impl<'data> Tensor<'data> {
         let mut shape = Vec::with_capacity(rank);
 
         unsafe { OgaTensorGetShape(self.ptr.as_ptr(), shape.as_mut_ptr(), rank) }.to_result()?;
+        // The length of the vector is not initialized, so we will force initialize it
+        unsafe {
+            shape.set_len(rank);
+        }
 
         Ok(shape)
     }
@@ -107,18 +111,15 @@ impl<'data> Tensor<'data> {
             })
             .ok_or(crate::error::Error::InvalidTensorShape)?;
 
+        if element_count == 0 {
+            return Ok(&[]);
+        }
+
         let mut ptr = ptr::null_mut();
         unsafe { OgaTensorGetData(self.ptr.as_ptr(), &mut ptr) }.to_result()?;
 
-        if element_count > 0 {
-            let data_ptr = NonNull::new(ptr).ok_or(crate::error::Error::NulError)?;
-            return Ok(unsafe {
-                std::slice::from_raw_parts(data_ptr.as_ptr().cast(), element_count)
-            });
-        }
-
-        let data_ptr = NonNull::new(ptr).unwrap_or_else(NonNull::dangling);
-        Ok(unsafe { std::slice::from_raw_parts(data_ptr.as_ptr().cast(), 0) })
+        let data_ptr = NonNull::new(ptr).to_result()?;
+        Ok(unsafe { std::slice::from_raw_parts(data_ptr.as_ptr().cast(), element_count) })
     }
 }
 
