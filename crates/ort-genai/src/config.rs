@@ -39,19 +39,7 @@ impl<'data> Config<'data> {
 
         unsafe { OgaCreateConfig(config_path.as_ptr(), &mut ptr) }.to_result()?;
 
-        let mut config = Self::try_from(ptr)?;
-
-        // For memory effciency and to better work with Rust's lifetimes, we will enable
-        // use model bytes directly.
-        config.overlay(
-            r#"{
-                "session": {
-                    "use_ort_model_bytes_directly": "1"
-                }
-            }"#,
-        )?;
-
-        Ok(config)
+        Self::try_from(ptr)
     }
 
     /// Creates a [`Config`] from a model package directory, using the supplied execution provider
@@ -78,19 +66,7 @@ impl<'data> Config<'data> {
         unsafe { OgaCreateConfigFromPackageEp(config_path.as_ptr(), ep_ptr, &mut ptr) }
             .to_result()?;
 
-        let mut config = Self::try_from(ptr)?;
-
-        // For memory effciency and to better work with Rust's lifetimes, we will enable
-        // use model bytes directly.
-        config.overlay(
-            r#"{
-                "session": {
-                    "use_ort_model_bytes_directly": "1"
-                }
-            }"#,
-        )?;
-
-        Ok(config)
+        Self::try_from(ptr)
     }
 
     /// Clears the list of providers in this configuration.
@@ -131,14 +107,9 @@ impl<'data> Config<'data> {
     /// Applications may call [`Config::remove_model_data`] to remove the model data when it is no
     /// longer needed.
     ///
-    /// `session.use_ort_model_bytes_directly` is force-enabled by the [`Config`] constructors to
-    /// avoid an extra copy of the model data in memory. The caller-owned `model_data` must
-    /// therefore remain valid until the [`Model`][crate::model::Model] created from this config is
-    /// destroyed, as the data may be used directly by the underlying ONNX Runtime session.
-    ///
     /// # Parameters
     /// * `model_filename` - The name of the model file as defined in the configuration.
-    /// * `model_data` - The model data to add. The data is expected to be valid at least until the model is created.
+    /// * `model_data` - The model data to add. The data is expected to be valid at least until the model is destroyed.
     pub fn add_model_data(
         &mut self,
         model_filename: &str,

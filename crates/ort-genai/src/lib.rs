@@ -5,7 +5,7 @@ use ort_genai_sys::{
     OgaSetTelemetryEnabled, OgaShutdown, OgaUnregisterExecutionProviderLibrary,
 };
 
-use crate::error::{OgaResult, OgaResultExt};
+use crate::error::{OgaResultExt};
 
 mod adapter;
 mod audios;

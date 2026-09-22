@@ -7,7 +7,7 @@ use std::{
 use ort_genai_sys::{OgaDestroyResult, OgaResult as OgaResultCType, OgaResultGetError};
 
 /// Alias used throughout the crate for FFI call results.
-pub(crate) type OgaResult<T> = Result<T, Error>;
+pub type OgaResult<T> = Result<T, Error>;
 
 /// Errors returned by the ONNX Runtime GenAI FFI bindings.
 ///
