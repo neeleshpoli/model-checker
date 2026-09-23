@@ -12,7 +12,7 @@ windows = { version = "0.62.2", features = ["Web_Http"] }
 windows-reactor-setup = { git = "https://github.com/microsoft/windows-rs" }
 
 [dependencies]
-async-openai = { version = "0.41.3", features = ["chat-completion-types", "image-types"] }
+async-openai = { version = "0.42.0", features = ["chat-completion-types", "image-types"] }
 serde = "1.0.229"
 serde_json = "1.0.151"
 tokio = { version = "1.53.1", features = ["rt-multi-thread", "sync"] }
