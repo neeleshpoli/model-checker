@@ -2,7 +2,7 @@ use std::{
     fs::{self, File},
     io::{Read, Write},
     path::{Path, PathBuf},
-    sync::LazyLock,
+    sync::OnceLock,
 };
 
 pub mod allocator;
@@ -15,7 +15,9 @@ const MODEL_REPO: &str = "microsoft/Phi-3-mini-4k-instruct-onnx";
 const MODEL_REVISION: &str = "main";
 const MODEL_SUBDIR: &str = "cpu_and_mobile/cpu-int4-rtn-block-32";
 
-static CACHED_MODEL_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
+static CACHED_MODEL_DIR: OnceLock<PathBuf> = OnceLock::new();
+
+fn init_model_dir() -> PathBuf {
     let target_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("target")
         .join("test_models")
@@ -47,7 +49,7 @@ static CACHED_MODEL_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
     }
 
     target_dir
-});
+}
 
 fn download_file(url: &str, dest_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let response = ureq::get(url).call()?;
@@ -73,5 +75,5 @@ fn download_file(url: &str, dest_path: &Path) -> Result<(), Box<dyn std::error::
 
 /// Gets the path to a downloaded test model.
 pub fn get_test_model_dir() -> &'static Path {
-    &CACHED_MODEL_DIR
+    CACHED_MODEL_DIR.get_or_init(init_model_dir)
 }
