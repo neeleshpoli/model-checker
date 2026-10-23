@@ -5,6 +5,6 @@ edition = "2024"
 links = "onnxruntime-genai"
 
 [build-dependencies]
-bindgen = "0.72"
+bindgen = "0.73"
 ureq = "3.4"
 zip = "8.6"
